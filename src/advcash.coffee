@@ -44,14 +44,14 @@ export default class AdvCash
       ac_client_lang: language or config.language
     }
 
-    if @_onSuccess
-      params.ac_success_url = "#{config.siteUrl}/api/#{config.callbackScriptName}?action=success"
+    # if @_onStatus
+    #   params.ac_success_url = "#{config.siteUrl}/api/advcash/status"
 
-    if @_onStatus
-      params.ac_status_url = "#{config.siteUrl}/api/#{config.callbackScriptName}?action=status"
-
-    if @_onFail
-      params.ac_fail_url = "#{config.siteUrl}/api/#{config.callbackScriptName}?action=fail"
+    # if @_onStatus
+    #   params.ac_status_url = "#{config.siteUrl}/api/#{config.callbackScriptName}?action=status"
+    #
+    # if @_onFail
+    #   params.ac_fail_url = "#{config.siteUrl}/api/#{config.callbackScriptName}?action=fail"
 
     # params.m_params = Signature.encodeParams params.m_orderid, m_params
     params.ac_sign = Signature.sign(params, config.secret)
@@ -68,7 +68,7 @@ Rest = new Restivus
 
 # http://localhost:3200/api/paybox?action=result&amount=50&order_id=vYyioup4zJG9Tk5vd
 Meteor.startup ->
-  Rest.addRoute config.callbackScriptName, {authRequired: false},
+  Rest.addRoute 'advcash/status', {authRequired: false},
     "#{config.callbackMethod}": ->
       if config.debug
         console.log 'AdvCash.restRoute', @queryParams, @bodyParams
@@ -89,27 +89,13 @@ Meteor.startup ->
 
       { action, ac_transaction_status, ac_hash } = params
 
-      if action is 'fail'
-        if config.debug
-          console.log 'AdvCash.restRoute.fail'
-        return response = AdvCash._onFail?(params)
-
       if ac_hash isnt Signature.hash(params)
+        console.log 'Wrong hash', ac_hash, Signature.hash(params)
         return
           statusCode: 403
           body: 'Sign isnt correct'
 
-      switch action
-        when 'check'
-          response = AdvCash._onStatus?(params)
-        when 'success'
-          response = AdvCash._onSuccess?(params)
-        else
-          if config.debug
-            console.log 'Unknown action', action, params
-          response =
-            statusCode: 400
-            body: "#{params.ac_order_id}.|error"
+      response = AdvCash._onStatus?(params)
 
       if response?.error
         console.log 'AdvCash.restRoute.error', response

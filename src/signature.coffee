@@ -27,7 +27,7 @@ export default class Signature
       ac_merchant_currency
       config.secret
     ]
-    sign = crypto.createHash('sha256').update(paramsArray.join(':'), 'utf-8').digest('hex').toUpperCase()
+    sign = crypto.createHash('sha256').update(paramsArray.join(':'), 'utf-8').digest('hex')
 
   @sign: (params, secret) ->
     {
