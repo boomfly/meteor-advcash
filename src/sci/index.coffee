@@ -8,22 +8,12 @@ import { sprintf } from 'sprintf-js'
 import requestIp from 'request-ip'
 
 import Signature from './signature'
-import config from './config'
+import config from '../config'
 
 export default class AdvCash
-  @debug: true
-
-  @config: (cfg) -> if cfg then _.extend(config, cfg) else _.extend({}, config)
   @onSuccess: (cb) -> @_onSuccess = cb
   @onStatus: (cb) -> @_onStatus = cb
   @onFail: (cb) -> @_onFail = cb
-
-  @call: (params, cb) ->
-    # console.log config
-    params.m_shop = config.merchantId
-    params.m_curr = config.currency unless params.m_curr
-    params.m_sign = Signature.sign(params, config.secretKey)
-    return cb?(null, params)
 
   @getPaymentUrl: (options) ->
     check options, {
@@ -35,8 +25,8 @@ export default class AdvCash
     }
     { amount, comment, currency, language, orderId } = options
     params = {
-      ac_account_email: config.email
-      ac_sci_name: config.name
+      ac_account_email: config.sci.email
+      ac_sci_name: config.sci.name
       ac_amount: sprintf("%01.2f", amount)
       ac_comment: new Buffer(comment).toString('base64')
       ac_currency: currency or config.currency
@@ -54,7 +44,7 @@ export default class AdvCash
     #   params.ac_fail_url = "#{config.siteUrl}/api/#{config.callbackScriptName}?action=fail"
 
     # params.m_params = Signature.encodeParams params.m_orderid, m_params
-    params.ac_sign = Signature.sign(params, config.secret)
+    params.ac_sign = Signature.sign(params, config.sci.secret)
 
     query = querystring.stringify params
 

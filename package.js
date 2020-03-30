@@ -15,7 +15,7 @@ Package.onUse((api) => {
   api.use('coffeescript@2.0.2_1', ['server', 'client']);
   // api.imply('coffeescript', 'server');
 
-  api.mainModule('src/advcash.coffee', 'server');
+  api.mainModule('src/index.coffee', 'server');
 });
 // This defines the tests for the package:
 Package.onTest((api) => {
@@ -29,5 +29,6 @@ Package.onTest((api) => {
 });
 // This lets you use npm packages in your package:
 Npm.depends({
-  'sprintf-js': '1.1.1'
+  'sprintf-js': '1.1.1',
+  'soap-as-promised': '1.26.0'
 });

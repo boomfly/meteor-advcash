@@ -2,7 +2,7 @@ import { URL } from 'url'
 import path from 'path'
 import crypto from 'crypto'
 import {sprintf} from 'sprintf-js'
-import config from './config'
+import config from '../config'
 
 export default class Signature
   @hash: (params) ->
@@ -25,7 +25,7 @@ export default class Signature
       ac_order_id
       ac_amount
       ac_merchant_currency
-      config.secret
+      config.sci.secret
     ]
     sign = crypto.createHash('sha256').update(paramsArray.join(':'), 'utf-8').digest('hex')
 

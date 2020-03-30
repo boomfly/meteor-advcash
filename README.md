@@ -1,95 +1,79 @@
-# Meteor Payeer integration
+# Meteor AdvCash integration
 
-Прием платежей через платежный шлюз Payeer для Meteor.js.
+Accept payments from AdvCash for Meteor.js.
 
-## Установка
+## Intall
 
 ```shell
-meteor add boomfly:meteor-paybox
+meteor add boomfly:meteor-advcash
 ```
 
-## Пример использования
+## Simple example SCI usage
 
 ```coffeescript
 import React from 'react'
 import ReactDOM from 'react-dom'
-import Payeer from 'meteor/boomfly:meteor-payeer'
+import AdvCash from 'meteor/boomfly:meteor-advcash'
 
-Payeer.config
-  secretKey: ''                   # Секретный ключ из настроек магазина
-  merchantId: ''                  # Идентификатор продавца
-  siteUrl: 'https://example.com'
+AdvCash.config {
+  sci:
+    email: ''
+    secret: ''
+    name: ''
   currency: 'USD'
-  testingMode: true               # Тестовый режим для отладки подключения
-  debug: true
-
+}
 
 if Meteor.isServer
   Meteor.methods
     placeOrder: (amount) ->
-      params =
-        pg_amount: amount
-      try
-        response = Payeer.initPaymentSync params
-      catch error
-        response = error
-      response
+      params = { amount }
+      paymentUrl = AdvCash.getPaymentUrl params
 
 if Meteor.isClient
   class PaymentButton extends React.Component
     placeOrder: ->
       Meteor.call 'placeOrder', 100, (error, result) ->
-        window.location.href = result.pg_redirect_url._text # Переправляем пользователя на страницу оплаты
+        window.location.href = result.ac_redirect_url._text # Redirect to payment page
 
     render: ->
-      <button className='btn btn-success' onClick={@placeOrder}>Оплатить 100 KZT</button>
+      <button className='btn btn-success' onClick={@placeOrder}>Pay 100 USD</button>
 
   ReactDOM.render <PaymentButton />, document.getElementById('app')
 ```
 
 ## API
 
-### Payeer.initPayment(params, callback)
+### AdvCash.getPaymentUrl(params)
 
 Инициализация платежа
 
-**params** - Объект, полный список допустимых параметров можно посмотреть на [странице](https://paybox.money/kz_ru/dev/payment-init)
-
-**callback** - Функция обработчик разультата, принимает 2 параметра (error, result)
-
-Доступна синхронная версия функции `Payeer.initPaymentSync` через [Meteor.wrapAsync](https://docs.meteor.com/api/core.html#Meteor-wrapAsync)
+**params** - Объект, полный список допустимых параметров можно посмотреть на [странице](https://advcash.com/files/documents/sci_1_10_final_uptodate_1.pdf)
 
 ## Events
 
-### Payeer.onResult(callback)
+### AdvCash.onStatus(callback)
 
 Обработка результата платежа
 
-**callback** - Функция обработки результата платежа, принимает 1 параметр (params). Полный список параметров на [странице](https://paybox.money/kz_ru/dev/payment-result)
+**callback** - Функция обработки результата платежа, принимает 1 параметр (params). Полный список параметров на [странице](https://advcash.com/files/documents/sci_1_10_final_uptodate_1.pdf)
 
-### Payeer.onCheck(callback)
-
-Проверка возможности совершения платежа
-
-**callback** - Функция проверки возможности совершения платежа, принимает 1 параметр (params). Полный список параметров на [странице](https://paybox.money/kz_ru/dev/payment-check)
-
-**return** - Функция должна вернуть объект с результатом проверки. Результат функции будет конвертирован в `xml` и отправлен ответом на запрос Payeer.
+**return** - Функция должна вернуть объект с результатом проверки. Результат функции будет конвертирован в `xml` и отправлен ответом на запрос AdvCash.
 
 **пример**:
 
 ```coffeescript
-Payeer.onCheck (params) ->
-  order = Order.findOne params.pg_order_id
+AdvCash.SCI.onStatus (params) ->
+  order = Order.findOne params.ac_order_id
   if not order
-    pg_status: 'rejected'
-    pg_description: "Order with _id: '#{params.pg_order_id}' not found"
+    ac_status: 'rejected'
+    ac_description: "Order with _id: '#{params.ac_order_id}' not found"
   else
     if order.status is OrderStatus.PENDING_PAYMENT
-      pg_status: 'ok'
+      ac_status: 'ok'
     else if order.status is OrderStatus.CANCELLED
-      pg_status: 'rejected'
-      pg_description: 'Order cancelled'
+      ac_status: 'rejected'
+      ac_description: 'Order cancelled'
     else if order.status is OrderStatus.PROCESSED
-      pg_status: 'rejected'
-      pg_description: 'Order already processed'
+      ac_status: 'rejected'
+      ac_description: 'Order already processed'
 ```
