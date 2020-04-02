@@ -13,6 +13,7 @@ apiInit = ->
 
 export default {
   config: (cfg) -> if cfg then _.extend(config, cfg) else _.extend({}, config)
-  API: apiInit
+  API:
+    getClient: apiInit
   SCI: AdvCashSCI
 }
