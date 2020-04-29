@@ -57,43 +57,46 @@ Rest = new Restivus
   prettyJson: true
 
 # http://localhost:3200/api/paybox?action=result&amount=50&order_id=vYyioup4zJG9Tk5vd
-Meteor.startup ->
-  Rest.addRoute 'advcash/status', {authRequired: false},
-    "#{config.callbackMethod}": ->
-      if config.debug
-        console.log 'AdvCash.restRoute', @queryParams, @bodyParams
+# Meteor.startup ->
+# console.log config
+Rest.addRoute 'advcash/status', {authRequired: false}, {
+  "#{config.sci.callbackMethod}": ->
+    # console.log AdvCash
+    if config.debug
+      console.log 'AdvCash.restRoute', @queryParams, @bodyParams
 
-      # if not config.debug
-      #   clientIp = requestIp.getClientIp(@request)
-      #   if clientIp not in ['185.71.65.92', '185.71.65.189', '149.202.17.210']
-      #     return
-      #       statusCode: 403
-      #       body: 'Access restricted 403'
+    # if not config.debug
+    #   clientIp = requestIp.getClientIp(@request)
+    #   if clientIp not in ['185.71.65.92', '185.71.65.189', '149.202.17.210']
+    #     return
+    #       statusCode: 403
+    #       body: 'Access restricted 403'
 
-      if @queryParams?.ac_transfer? or @queryParams?.ac_order_id?
-        params = _.omit @queryParams, ['__proto__']
-      else if @bodyParams?.ac_transfer? or @bodyParams?.ac_order_id?
-        params = _.omit @bodyParams, ['__proto__']
-      else
-        params = {}
+    if @queryParams?.ac_transfer? or @queryParams?.ac_order_id?
+      params = _.omit @queryParams, ['__proto__']
+    else if @bodyParams?.ac_transfer? or @bodyParams?.ac_order_id?
+      params = _.omit @bodyParams, ['__proto__']
+    else
+      params = {}
 
-      { action, ac_transaction_status, ac_hash } = params
+    { action, ac_transaction_status, ac_hash } = params
 
-      if ac_hash isnt Signature.hash(params)
-        console.log 'Wrong hash', ac_hash, Signature.hash(params)
-        return
-          statusCode: 403
-          body: 'Sign isnt correct'
+    if ac_hash isnt Signature.hash(params)
+      console.log 'Wrong hash', ac_hash, Signature.hash(params)
+      return
+        statusCode: 403
+        body: 'Sign isnt correct'
 
-      response = AdvCash._onStatus?(params)
+    response = AdvCash._onStatus?(params)
 
-      if response?.error
-        console.log 'AdvCash.restRoute.error', response
-        response =
-          statusCode: 500
-          body: "#{params.ac_order_id}.|error"
+    if response?.error
+      console.log 'AdvCash.restRoute.error', response
+      response =
+        statusCode: 500
+        body: "#{params.ac_order_id}.|error"
 
-      if config.debug
-        console.log 'AdvCash.restRoute.response', response
+    if config.debug
+      console.log 'AdvCash.restRoute.response', response
 
-      response
+    response
+}
